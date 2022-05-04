@@ -18,19 +18,26 @@ def mandelbrot(coordinates, max_iter):
     :return:
     """
     c = coordinates[:, 0] + coordinates[:, 1] * 1j
-    z = np.full(shape=c.shape, fill_value=0 + 0j)
-    z0 = np.copy(c)
+    z = np.copy(c)
+    z_new = np.copy(z)
     d_dc = np.full(shape=c.shape, fill_value=0 + 0j)
-    d_dz = np.full(shape=c.shape, fill_value=0 + 0j)
+    d_dc_new = d_dc.copy()
+    d_dz = 2 * z
+    d_dz_new = d_dz.copy()
     d2_dcdz = np.full(shape=c.shape, fill_value=0 + 0j)
     d2_dz2 = np.full(shape=c.shape, fill_value=0 + 0j)
     mask = np.full(shape=c.shape, fill_value=True)
+
     for _ in range(max_iter):
-        z[mask] = (z[mask] ** 2) + c[mask]
-        d_dc[mask] = 2 * z[mask] * d_dc[mask] + 1
-        d_dz[mask] = 2 * z[mask]
-        d2_dcdz[mask] = 4 * z[mask] * (2 * z[mask] * d_dc[mask] + 1) + 2
-        d2_dz2[mask] = 4 * (z0[mask] ** 3) + z[mask]
+        z_new[mask] = (z[mask] ** 2) + c[mask]
+        d_dc_new[mask] = 2 * z[mask] * d_dc[mask] + 1
+        d_dz_new[mask] = 2 * z[mask]
+        d2_dcdz[mask] = 2 * d_dc[mask] * d_dz[mask] + 2 * z[mask] * d2_dcdz[mask]
+        d2_dz2[mask] = 2 * d_dz[mask] + 2 * z[mask] * d2_dz2[mask]
+
+        z = z_new.copy()
+        d_dc = d_dc_new.copy()
+        d_dz = d_dz_new.copy()
         mask = np.abs(z) < 4
         mask[np.isnan(z)] = False
 
@@ -50,7 +57,7 @@ def perform_colouring(points, color_from, color_to):
     palette_colors = hsl_from.range_to(hsl_to, gradient_sections)
     palette_colors = np.array(list(map(lambda x: x.rgb, palette_colors)))
 
-    k = 3000
+    k = 1200
     with np.errstate(divide='ignore'):
         color_table_index = k * np.log(0.98 + points)
         color_table_index[np.isnan(color_table_index)] = 0
@@ -74,7 +81,7 @@ def perform_colouring(points, color_from, color_to):
 
 
 WIDTH, HEIGHT = (1920, 1080)
-iterations = 1000
+iterations = 800
 colour_2 = (250 / 255, 179 / 255, 57 / 255)
 colour_1 = (224 / 255, 34 / 255, 4 / 255)
 pixel_set = generate_coordinates(WIDTH, HEIGHT, [-2, 1], 500)
